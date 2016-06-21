@@ -1,0 +1,10 @@
+[Addon]
+Name=fcitx-dbus-status
+_GeneralName=DBusStatus
+_Comment=Provides DBus interfaces to get/set statuses
+Category=Module
+Enabled=True
+Library=fcitx-dbus-status.so
+Type=SharedLibrary
+Advance=True
+
