@@ -143,7 +143,7 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
                                     DBusMessage *message)
 {
     DBusMessage *reply = NULL;
-    char *status_name = NULL;
+    const char *status_name = NULL;
     DBusError error;
     dbus_error_init(&error);
 
