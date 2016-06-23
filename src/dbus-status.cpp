@@ -176,6 +176,25 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
     return reply;
 }
 
+static struct MethodEntry {
+    const char *interface;
+    const char *name;
+    DBusMessage *(*handler)(FcitxDBusStatus *dbus_status,
+                            DBusConnection *connection,
+                            DBusMessage *message);
+} method_handlers[] = {
+    {
+        DBUS_INTERFACE_INTROSPECTABLE,
+        "Introspect",
+        HandleIntrospection,
+    },
+    {
+        FCITX_STATUS_DBUS_IFACE,
+        "Get",
+        HandleGetMethod,
+    },
+};
+
 static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
                                                      DBusMessage *message,
                                                      void *user_data)
@@ -184,10 +203,10 @@ static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     DBusMessage *reply = NULL;
 
-    if (dbus_message_is_method_call(message, DBUS_INTERFACE_INTROSPECTABLE, "Introspect")) {
-        reply = HandleIntrospection(dbus_status, connection, message);
-    } else if (dbus_message_is_method_call(message, FCITX_STATUS_DBUS_IFACE, "Get")) {
-        reply = HandleGetMethod(dbus_status, connection, message);
+    for (int i = 0; i < sizeof(method_handlers) / sizeof(MethodEntry); i++) {
+        MethodEntry &method = method_handlers[i];
+        if (dbus_message_is_method_call(message, method.interface, method.name))
+            reply = method.handler(dbus_status, connection, message);
     }
 
     if (reply) {
