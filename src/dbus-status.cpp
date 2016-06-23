@@ -123,6 +123,59 @@ static DBusMessage *UnknownDBusMethod(DBusMessage *message)
                                          dbus_message_get_signature(message));
 }
 
+static DBusMessage *HandleIntrospection(FcitxDBusStatus *dbus_status,
+                                        DBusConnection *connection,
+                                        DBusMessage *message)
+{
+    DBusMessage *reply = dbus_message_new_method_return(message);
+    if (!reply) {
+        FcitxLog(ERROR, "Failed to allocate DBusMessage for reply!");
+        return NULL;
+    }
+    dbus_message_append_args(reply,
+                             DBUS_TYPE_STRING, &fcitx_dbus_status_introspection_xml,
+                             DBUS_TYPE_INVALID);
+    return reply;
+}
+
+static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
+                                    DBusConnection *connection,
+                                    DBusMessage *message)
+{
+    DBusMessage *reply = NULL;
+    char *status_name = NULL;
+    DBusError error;
+    dbus_error_init(&error);
+    dbus_bool_t succeeded
+        = dbus_message_get_args(message, &error,
+                                DBUS_TYPE_STRING, &status_name,
+                                DBUS_TYPE_INVALID);
+    if (succeeded) {
+        FcitxUIComplexStatus *status
+            = FcitxUIGetComplexStatusByName(dbus_status->owner,
+                                            status_name);
+        const char *shortDescription = "";
+        const char *longDescription = "";
+        if (status) {
+            shortDescription = status->shortDescription;
+            longDescription = status->longDescription;
+        } else {
+            // TODO
+        }
+        reply = dbus_message_new_method_return(message);
+        dbus_message_append_args(reply,
+                                 DBUS_TYPE_STRING, &shortDescription,
+                                 DBUS_TYPE_STRING, &longDescription,
+                                 DBUS_TYPE_INVALID);
+    } else {
+        // TODO: Use the error
+        reply = UnknownDBusMethod(message);
+    }
+    dbus_error_free(&error);
+
+    return reply;
+}
+
 static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
                                                      DBusMessage *message,
                                                      void *user_data)
@@ -132,40 +185,9 @@ static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
     DBusMessage *reply = NULL;
 
     if (dbus_message_is_method_call(message, DBUS_INTERFACE_INTROSPECTABLE, "Introspect")) {
-        reply = dbus_message_new_method_return(message);
-        dbus_message_append_args(reply,
-                                 DBUS_TYPE_STRING, &fcitx_dbus_status_introspection_xml,
-                                 DBUS_TYPE_INVALID);
+        reply = HandleIntrospection(dbus_status, connection, message);
     } else if (dbus_message_is_method_call(message, FCITX_STATUS_DBUS_IFACE, "Get")) {
-        char *status_name = NULL;
-        DBusError error;
-        dbus_error_init(&error);
-        dbus_bool_t succeeded
-            = dbus_message_get_args(message, &error,
-                                    DBUS_TYPE_STRING, &status_name,
-                                    DBUS_TYPE_INVALID);
-        if (succeeded) {
-            FcitxUIComplexStatus *status
-                = FcitxUIGetComplexStatusByName(dbus_status->owner,
-                                                status_name);
-            const char *shortDescription = "";
-            const char *longDescription = "";
-            if (status) {
-                shortDescription = status->shortDescription;
-                longDescription = status->longDescription;
-            } else {
-                // TODO
-            }
-            reply = dbus_message_new_method_return(message);
-            dbus_message_append_args(reply,
-                                     DBUS_TYPE_STRING, &shortDescription,
-                                     DBUS_TYPE_STRING, &longDescription,
-                                     DBUS_TYPE_INVALID);
-        } else {
-            // TODO: Use the error
-            reply = UnknownDBusMethod(message);
-        }
-        dbus_error_free(&error);
+        reply = HandleGetMethod(dbus_status, connection, message);
     }
 
     if (reply) {
