@@ -242,7 +242,7 @@ static struct MethodEntry {
     DBusMessage *(*handler)(FcitxDBusStatus *dbusStatus,
                             DBusConnection *connection,
                             DBusMessage *message);
-} methodHandlers[] = {
+} methodEntries[] = {
     {
         DBUS_INTERFACE_INTROSPECTABLE,
         "Introspect",
@@ -268,8 +268,8 @@ static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     DBusMessage *reply = NULL;
 
-    for (int i = 0; i < sizeof(methodHandlers) / sizeof(MethodEntry); i++) {
-        MethodEntry &method = methodHandlers[i];
+    for (int i = 0; i < sizeof(methodEntries) / sizeof(MethodEntry); i++) {
+        MethodEntry &method = methodEntries[i];
         if (dbus_message_is_method_call(message, method.interface, method.name))
             reply = method.handler(dbusStatus, connection, message);
     }
