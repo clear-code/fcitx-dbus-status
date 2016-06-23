@@ -190,7 +190,6 @@ static DBusMessage *HandleSetMethod(FcitxDBusStatus *dbusStatus,
     const char *statusName = NULL;
     const char *status = NULL;
     DBusError error;
-    dbus_bool_t result = FALSE;
     dbus_error_init(&error);
 
     dbus_bool_t succeeded
@@ -213,6 +212,7 @@ static DBusMessage *HandleSetMethod(FcitxDBusStatus *dbusStatus,
     }
 
     // TODO: It doesn't support sub menus yet.
+    dbus_bool_t result = FALSE;
     FcitxUIMenu *menu
         = FcitxUIGetMenuByStatusName(dbusStatus->owner,
                                      statusName);
