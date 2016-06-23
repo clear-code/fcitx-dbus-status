@@ -77,42 +77,42 @@ static DBusObjectPathVTable fcitxDBusStatusVTable = {
 
 static void *DBusStatusCreate(FcitxInstance *instance)
 {
-    void *user_data = fcitx_utils_malloc0(sizeof(FcitxDBusStatus));
-    FcitxDBusStatus *dbus_status = static_cast<FcitxDBusStatus *>(user_data);
-    dbus_status->owner = instance;
+    void *userData = fcitx_utils_malloc0(sizeof(FcitxDBusStatus));
+    FcitxDBusStatus *dbusStatus = static_cast<FcitxDBusStatus *>(userData);
+    dbusStatus->owner = instance;
 
     do {
-        dbus_status->connection = FcitxDBusGetConnection(instance);
-        if (!dbus_status->connection) {
+        dbusStatus->connection = FcitxDBusGetConnection(instance);
+        if (!dbusStatus->connection) {
             FcitxLog(ERROR, "DBus Not initialized");
             break;
         }
 
         dbus_bool_t succeeded
-            = dbus_connection_register_object_path(dbus_status->connection,
+            = dbus_connection_register_object_path(dbusStatus->connection,
                                                    FCITX_STATUS_DBUS_PATH,
                                                    &fcitxDBusStatusVTable,
-                                                   user_data);
+                                                   userData);
         if (!succeeded) {
             FcitxLog(ERROR, "Failed to register " FCITX_STATUS_DBUS_PATH);
             break;
         }
 
-        return user_data;
+        return userData;
     } while(0);
 
-    free(user_data);
+    free(userData);
     return NULL;
 }
 
 static void DBusStatusDestroy(void *arg)
 {
-    FcitxDBusStatus *dbus_status = static_cast<FcitxDBusStatus *>(arg);
-    if (dbus_status && dbus_status->connection) {
-        dbus_connection_unregister_object_path(dbus_status->connection,
+    FcitxDBusStatus *dbusStatus = static_cast<FcitxDBusStatus *>(arg);
+    if (dbusStatus && dbusStatus->connection) {
+        dbus_connection_unregister_object_path(dbusStatus->connection,
                                                FCITX_STATUS_DBUS_PATH);
     }
-    free(dbus_status);
+    free(dbusStatus);
 }
 
 static DBusMessage *UnknownDBusMethod(DBusMessage *message)
@@ -123,7 +123,7 @@ static DBusMessage *UnknownDBusMethod(DBusMessage *message)
                                          dbus_message_get_signature(message));
 }
 
-static DBusMessage *HandleIntrospection(FcitxDBusStatus *dbus_status,
+static DBusMessage *HandleIntrospection(FcitxDBusStatus *dbusStatus,
                                         DBusConnection *connection,
                                         DBusMessage *message)
 {
@@ -138,25 +138,25 @@ static DBusMessage *HandleIntrospection(FcitxDBusStatus *dbus_status,
     return reply;
 }
 
-static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
+static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbusStatus,
                                     DBusConnection *connection,
                                     DBusMessage *message)
 {
     DBusMessage *reply = NULL;
-    const char *status_name = NULL;
+    const char *statusName = NULL;
     DBusError error;
     dbus_error_init(&error);
 
     dbus_bool_t succeeded
         = dbus_message_get_args(message, &error,
-                                DBUS_TYPE_STRING, &status_name,
+                                DBUS_TYPE_STRING, &statusName,
                                 DBUS_TYPE_INVALID);
 
     if (succeeded) {
         // TDOO: Should also search simple statuses
         FcitxUIComplexStatus *status
-            = FcitxUIGetComplexStatusByName(dbus_status->owner,
-                                            status_name);
+            = FcitxUIGetComplexStatusByName(dbusStatus->owner,
+                                            statusName);
         const char *shortDescription = "";
         const char *longDescription = "";
         if (status) {
@@ -181,10 +181,10 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
 static struct MethodEntry {
     const char *interface;
     const char *name;
-    DBusMessage *(*handler)(FcitxDBusStatus *dbus_status,
+    DBusMessage *(*handler)(FcitxDBusStatus *dbusStatus,
                             DBusConnection *connection,
                             DBusMessage *message);
-} method_handlers[] = {
+} methodHandlers[] = {
     {
         DBUS_INTERFACE_INTROSPECTABLE,
         "Introspect",
@@ -199,16 +199,16 @@ static struct MethodEntry {
 
 static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
                                                      DBusMessage *message,
-                                                     void *user_data)
+                                                     void *userData)
 {
-    FcitxDBusStatus *dbus_status = static_cast<FcitxDBusStatus *>(user_data);
+    FcitxDBusStatus *dbusStatus = static_cast<FcitxDBusStatus *>(userData);
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     DBusMessage *reply = NULL;
 
-    for (int i = 0; i < sizeof(method_handlers) / sizeof(MethodEntry); i++) {
-        MethodEntry &method = method_handlers[i];
+    for (int i = 0; i < sizeof(methodHandlers) / sizeof(MethodEntry); i++) {
+        MethodEntry &method = methodHandlers[i];
         if (dbus_message_is_method_call(message, method.interface, method.name))
-            reply = method.handler(dbus_status, connection, message);
+            reply = method.handler(dbusStatus, connection, message);
     }
 
     if (reply) {
