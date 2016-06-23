@@ -270,8 +270,12 @@ static DBusHandlerResult FcitxDBusStatusEventHandler(DBusConnection *connection,
 
     for (int i = 0; i < sizeof(methodEntries) / sizeof(MethodEntry); i++) {
         MethodEntry &method = methodEntries[i];
-        if (dbus_message_is_method_call(message, method.interface, method.name))
+        if (dbus_message_is_method_call(message,
+                                        method.interface,
+                                        method.name)) {
             reply = method.handler(dbusStatus, connection, message);
+            break;
+        }
     }
 
     if (reply) {
