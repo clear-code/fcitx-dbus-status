@@ -158,7 +158,7 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbusStatus,
                                 DBUS_TYPE_INVALID);
 
     if (succeeded) {
-        // TDOO: Should also search simple statuses
+        // TDOO: Should search also simple statuses
         FcitxUIComplexStatus *status
             = FcitxUIGetComplexStatusByName(dbusStatus->owner,
                                             statusName);
