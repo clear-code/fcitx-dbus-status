@@ -146,10 +146,12 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
     char *status_name = NULL;
     DBusError error;
     dbus_error_init(&error);
+
     dbus_bool_t succeeded
         = dbus_message_get_args(message, &error,
                                 DBUS_TYPE_STRING, &status_name,
                                 DBUS_TYPE_INVALID);
+
     if (succeeded) {
         FcitxUIComplexStatus *status
             = FcitxUIGetComplexStatusByName(dbus_status->owner,
