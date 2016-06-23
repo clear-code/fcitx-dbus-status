@@ -46,6 +46,11 @@ const char *introspection_xml =
     "<arg name=\"short_description\" direction=\"out\" type=\"s\"/>"
     "<arg name=\"long_description\" direction=\"out\" type=\"s\"/>"
     "</method>"
+    "<method name=\"Set\">"
+    "<arg name=\"status_name\" direction=\"in\" type=\"s\"/>"
+    "<arg name=\"status\" direction=\"in\" type=\"s\"/>"
+    "<arg name=\"succeeded\" direction=\"out\" type=\"b\"/>"
+    "</method>"
     "</interface>"
     "</node>";
 
@@ -178,6 +183,59 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbusStatus,
     return reply;
 }
 
+static DBusMessage *HandleSetMethod(FcitxDBusStatus *dbusStatus,
+                                    DBusConnection *connection,
+                                    DBusMessage *message)
+{
+    const char *statusName = NULL;
+    const char *status = NULL;
+    DBusError error;
+    dbus_bool_t result = FALSE;
+    dbus_error_init(&error);
+
+    dbus_bool_t succeeded
+        = dbus_message_get_args(message, &error,
+                                DBUS_TYPE_STRING, &statusName,
+                                DBUS_TYPE_STRING, &status,
+                                DBUS_TYPE_INVALID);
+    if (!succeeded) {
+        FcitxLog(ERROR, "Invalid arguments for Get method: %s",
+                 error.message);
+        dbus_error_free(&error);
+        return UnknownDBusMethod(message);
+    }
+    dbus_error_free(&error);
+
+    DBusMessage *reply = dbus_message_new_method_return(message);
+    if (!reply) {
+        FcitxLog(ERROR, "Failed to allocate DBusMessage for reply!");
+        return NULL;
+    }
+
+    // TODO: It doesn't support sub menus yet.
+    FcitxUIMenu *menu
+        = FcitxUIGetMenuByStatusName(dbusStatus->owner,
+                                     statusName);
+    if (menu) {
+        UT_array *items = &menu->shell;
+        FcitxMenuItem *item
+            = reinterpret_cast<FcitxMenuItem *>(utarray_front(&menu->shell));
+        for (int i = 0; item; ++i) {
+            if (status && item->tipstr && !strcmp(status, item->tipstr)) {
+                menu->MenuAction(menu, i);
+                result = TRUE;
+                break;
+            }
+            item = reinterpret_cast<FcitxMenuItem *>(utarray_next(items, item));
+        }
+    }
+    dbus_message_append_args(reply,
+                             DBUS_TYPE_BOOLEAN, &result,
+                             DBUS_TYPE_INVALID);
+
+    return reply;
+}
+
 static struct MethodEntry {
     const char *interface;
     const char *name;
@@ -194,6 +252,11 @@ static struct MethodEntry {
         FCITX_STATUS_DBUS_IFACE,
         "Get",
         HandleGetMethod,
+    },
+    {
+        FCITX_STATUS_DBUS_IFACE,
+        "Set",
+        HandleSetMethod,
     },
 };
 
