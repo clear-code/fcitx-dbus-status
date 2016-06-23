@@ -31,7 +31,7 @@
 static void *DBusStatusCreate(FcitxInstance *instance);
 static void  DBusStatusDestroy(void *arg);
 
-const char * fcitx_dbus_status_introspection_xml =
+const char *introspection_xml =
     "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\" "
     "\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">"
     "<node name=\"/Status\">"
@@ -133,7 +133,7 @@ static DBusMessage *HandleIntrospection(FcitxDBusStatus *dbus_status,
         return NULL;
     }
     dbus_message_append_args(reply,
-                             DBUS_TYPE_STRING, &fcitx_dbus_status_introspection_xml,
+                             DBUS_TYPE_STRING, &introspection_xml,
                              DBUS_TYPE_INVALID);
     return reply;
 }
