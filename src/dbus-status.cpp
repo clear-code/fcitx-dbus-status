@@ -159,8 +159,6 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
         if (status) {
             shortDescription = status->shortDescription;
             longDescription = status->longDescription;
-        } else {
-            // TODO
         }
         reply = dbus_message_new_method_return(message);
         dbus_message_append_args(reply,
@@ -168,7 +166,8 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbus_status,
                                  DBUS_TYPE_STRING, &longDescription,
                                  DBUS_TYPE_INVALID);
     } else {
-        // TODO: Use the error
+        FcitxLog(ERROR, "Invalid arguments for Get method: %s",
+                 error.message);
         reply = UnknownDBusMethod(message);
     }
     dbus_error_free(&error);
