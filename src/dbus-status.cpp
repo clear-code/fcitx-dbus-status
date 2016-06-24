@@ -21,6 +21,7 @@
 #include <dbus/dbus.h>
 #include <fcitx/fcitx.h>
 #include <fcitx/instance.h>
+#include <fcitx/hook.h>
 #include <fcitx/module.h>
 #include <fcitx/module/dbus/fcitx-dbus.h>
 #include <fcitx/module/dbus/dbusstuff.h>
@@ -51,6 +52,11 @@ const char *introspection_xml =
     "<arg name=\"status\" direction=\"in\" type=\"s\"/>"
     "<arg name=\"succeeded\" direction=\"out\" type=\"b\"/>"
     "</method>"
+    "<signal name=\"Changed\">"
+    "<arg name=\"status_name\" type=\"s\"/>"
+    "<arg name=\"short_descriptin\" type=\"s\"/>"
+    "<arg name=\"long_description\" type=\"s\"/>"
+    "</signal>"
     "</interface>"
     "</node>";
 
@@ -80,6 +86,44 @@ static DBusObjectPathVTable fcitxDBusStatusVTable = {
     NULL
 };
 
+void UIStatusChanged (void* arg, const char *statusName)
+{
+    FcitxDBusStatus *dbusStatus = static_cast<FcitxDBusStatus *>(arg);
+    FcitxUIStatus *status
+        = FcitxUIGetStatusByName(dbusStatus->owner, statusName);
+    FcitxUIComplexStatus *complexStatus
+        = FcitxUIGetComplexStatusByName(dbusStatus->owner, statusName);
+    const char *shortDescription = "";
+    const char *longDescription = "";
+    if (status) {
+        shortDescription = status->shortDescription;
+        longDescription = status->longDescription;
+    } else if (complexStatus) {
+        shortDescription = complexStatus->shortDescription;
+        longDescription = complexStatus->longDescription;
+    }
+    DBusMessage *message = dbus_message_new_signal(FCITX_STATUS_DBUS_PATH,
+                                                   FCITX_STATUS_DBUS_IFACE,
+                                                   "Changed");
+    dbus_message_append_args(message,
+                             DBUS_TYPE_STRING, &statusName,
+                             DBUS_TYPE_STRING, &shortDescription,
+                             DBUS_TYPE_STRING, &longDescription,
+                             DBUS_TYPE_INVALID);
+    if (message) {
+        dbus_connection_send(dbusStatus->connection, message, NULL);
+        dbus_message_unref(message);
+        dbus_connection_flush(dbusStatus->connection);
+    }
+}
+
+static FcitxUIStatusHook uiStatusChangedHook =
+{
+    UIStatusChanged,
+    NULL,
+};
+
+
 static void *DBusStatusCreate(FcitxInstance *instance)
 {
     void *userData = fcitx_utils_malloc0(sizeof(FcitxDBusStatus));
@@ -102,6 +146,9 @@ static void *DBusStatusCreate(FcitxInstance *instance)
             FcitxLog(ERROR, "Failed to register " FCITX_STATUS_DBUS_PATH);
             break;
         }
+
+        uiStatusChangedHook.arg = dbusStatus;
+        FcitxInstanceRegisterUIStatusChangedHook(instance, uiStatusChangedHook);
 
         return userData;
     } while(0);
