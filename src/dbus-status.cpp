@@ -102,9 +102,14 @@ void UIStatusChanged (void* arg, const char *statusName)
         shortDescription = complexStatus->shortDescription;
         longDescription = complexStatus->longDescription;
     }
+
     DBusMessage *message = dbus_message_new_signal(FCITX_STATUS_DBUS_PATH,
                                                    FCITX_STATUS_DBUS_IFACE,
                                                    "Changed");
+    if (!message) {
+        FcitxLog(ERROR, "Failed to allocate DBusMessage to send signal!");
+        return;
+    }
     dbus_message_append_args(message,
                              DBUS_TYPE_STRING, &statusName,
                              DBUS_TYPE_STRING, &shortDescription,
