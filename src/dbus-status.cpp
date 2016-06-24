@@ -158,15 +158,20 @@ static DBusMessage *HandleGetMethod(FcitxDBusStatus *dbusStatus,
                                 DBUS_TYPE_INVALID);
 
     if (succeeded) {
-        // TDOO: Should search also simple statuses
-        FcitxUIComplexStatus *status
-            = FcitxUIGetComplexStatusByName(dbusStatus->owner,
-                                            statusName);
         const char *shortDescription = "";
         const char *longDescription = "";
+        FcitxUIStatus *status
+            = FcitxUIGetStatusByName(dbusStatus->owner,
+                                     statusName);
+        FcitxUIComplexStatus *complexStatus
+            = FcitxUIGetComplexStatusByName(dbusStatus->owner,
+                                            statusName);
         if (status) {
             shortDescription = status->shortDescription;
             longDescription = status->longDescription;
+        } else if (complexStatus) {
+            shortDescription = complexStatus->shortDescription;
+            longDescription = complexStatus->longDescription;
         }
         reply = dbus_message_new_method_return(message);
         dbus_message_append_args(reply,
