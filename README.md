@@ -5,23 +5,29 @@ statuses via D-Bus.
 
 Basic Install
 ====================
+
+```
 $ mkdir build
 $ cd build
 $ cmake ..
 $ make
 $ sudo make install
+```
 
 Please restart fcitx to enable it.
 
 Dependency
 =====================
-fcitx (core and dbus module)
-dbus
+
+  * fcitx (core and dbus module)
+  * dbus
 
 For example, you'll need to install these dependencies by the following command
 to build fcitx-dbus-status on Debian/Ubuntu:
 
+```
 $ sudo apt-get install fcitx-libs-dev fcitx-module-dbus libdbus-1-dev
+```
 
 Usage
 =====================
