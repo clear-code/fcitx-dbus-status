@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project(fcitx-dbus-status)
 
-FIND_PACKAGE(Fcitx 4.2.8 REQUIRED)
+FIND_PACKAGE(Fcitx 4.2.9.2 REQUIRED)
 PKG_CHECK_MODULES(DBUS "dbus-1>=1.1.0" )
 
 _fcitx_add_uninstall_target()
